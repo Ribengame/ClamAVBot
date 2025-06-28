@@ -1,7 +1,7 @@
 import discord, aiohttp, os, subprocess, tempfile, git, schedule, time, threading
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-GIT_REPO = os.getenv("GIT_REPO")  # e.g. "https://github.com/user/repo.git"
+GIT_REPO = os.getenv("https://github.com/Ribengame/ClamAVBot.git")  # e.g. "https://github.com/user/repo.git"
 GIT_BRANCH = os.getenv("GIT_BRANCH", "main")
 CLONE_DIR = "/app/code"
 
