@@ -58,10 +58,10 @@ async def on_message(message):
         os.remove(file_path)
 
         if "OK" in output:
-            await message.channel.send(f"✅ `{attachment.filename}` jest czysty!")
+            await message.channel.send(f"✅ `{attachment.filename}` is clean!")
         elif "FOUND" in output:
-            await message.channel.send(f"⚠️ WYKRYTO WIRUSA w `{attachment.filename}`!\n```{output}```")
+            await message.channel.send(f"⚠️ Virus detected in `{attachment.filename}`!\n```{output}```")
         else:
-            await message.channel.send(f"❓ Wynik niejednoznaczny:\n```{output}```")
+            await message.channel.send(f"❓ The result is ambiguous:\n```{output}```")
 
 client.run(TOKEN)
