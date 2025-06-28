@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+RUN apt update \
+ && apt install -y clamav clamav-daemon git \
+ && freshclam \
+ && rm -rf /var/lib/apt/lists/*
+
+# 2. creating /app
+WORKDIR /app
+
+# 3. copy files
+COPY . .
+
+# 4. install python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 5. Main command
+CMD ["python", "bot.py"]
