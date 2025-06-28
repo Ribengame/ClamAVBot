@@ -1,0 +1,2 @@
+# ClamAVBot
+Discord file scaner
