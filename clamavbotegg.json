@@ -1,18 +1,38 @@
-FROM python:3.11-slim
-
-RUN apt update \
- && apt install -y clamav clamav-daemon git \
- && freshclam \
- && rm -rf /var/lib/apt/lists/*
-
-# 2. creating /app
-WORKDIR /app
-
-# 3. copy files
-COPY . .
-
-# 4. install python
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 5. Main command
-CMD ["python", "bot.py"]
+{
+  "name": "Python 3.11 ClamAV Bot",
+  "description": "ClamAVBot",
+  "docker_images": [
+    "python:3.11-slim"
+  ],
+  "startup": "python bot.py",
+  "environment": {
+    "ENV_VAR_EXAMPLE": "default_value"
+  },
+  "config": {
+    "files": "{}",
+    "startup": "python bot.py",
+    "logs": {
+      "custom": false,
+      "location": "logs/output.log"
+    }
+  },
+  "scripts": {
+    "installation": {
+      "script": "apt update && apt install -y clamav clamav-daemon git && freshclam && rm -rf /var/lib/apt/lists/* && pip install --no-cache-dir -r requirements.txt",
+      "container": "debian:latest",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "BOT_TOKEN",
+      "description": "Discord Bot Token",
+      "env_variable": "BOT_TOKEN",
+      "default_value": "",
+      "required": true,
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    }
+  ]
+}
