@@ -1,31 +1,37 @@
-FROM python:3.11-slim
+#!/bin/bash
+# ClamAVBot install script
 
-# 
-RUN mkdir -p /usr/share/man/man1 \
- && apt update \
- && apt -y install git ca-certificates dnsutils iproute2 make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev libgdbm-dev uuid-dev openjdk-17-jre-headless clamav clamav-daemon \
- && freshclam \
- && rm -rf /var/lib/apt/lists/*
+## install deps
+mkdir -p /usr/share/man/man1
+apt update
+apt -y install git ca-certificates dnsutils iproute2 make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev libgdbm-dev uuid-dev openjdk-17-jre-headless clamav clamav-daemon
 
-#
-RUN mkdir -p /home/container/.config/ClamAVBot /home/container/.local/share/ClamAVBot/data/pterodactyl
+## config folder layouts
+echo -e "generating config folder layout"
+mkdir -p /mnt/server/.config/{ClamAVBot,share}/ /mnt/server/.local/share/ClamAVBot/data/pterodactyl/
+cd /mnt/server/
+ln -s .local/share/ClamAVBot/data/pterodactyl/ ./configs
 
-WORKDIR /home/container
+## clone bot repo
+echo -e "cloning ClamAVBot from GitHub"
+git clone https://github.com/Ribengame/ClamAVBot.git /mnt/server
 
-#
-RUN git clone https://github.com/Ribengame/ClamAVBot.git /home/container
+## add container user and permissions
+echo -e "add container user to install"
+ln -s /mnt/server/ /home/container
+useradd -m -d /home/container container
+chown -R container /mnt/server/
 
-#
-RUN useradd -m -d /home/container container \
- && chown -R container:container /home/container
+## install python deps as container user
+echo -e "install python dependencies"
+pip install --upgrade pip
+su - container -c 'pip install --upgrade pip wheel'
+su - container -c 'pip install --no-cache-dir -r /mnt/server/requirements.txt'
 
-#
-RUN pip install --upgrade pip \
- && su - container -c 'pip install --upgrade pip wheel' \
- && su - container -c 'pip install --no-cache-dir -r /home/container/requirements.txt'
+## update clamav virus database
+echo -e "updating clamav virus database"
+freshclam
 
-#
-USER container
-
-#
-CMD ["python3", "/home/container/bot.py"]
+echo "-------------------------------------------------------"
+echo "Installation completed"
+echo "-------------------------------------------------------"
