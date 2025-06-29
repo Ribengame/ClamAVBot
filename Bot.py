@@ -1,4 +1,4 @@
-DISCORD_TOKEN=tu_wklej_token
+DISCORD_TOKEN=Here_paste_token
 GIT_REPO=https://github.com/Ribengame/ClamAVBot.git
 GIT_BRANCH=main
 
@@ -13,7 +13,7 @@ import time
 import threading
 from dotenv import load_dotenv
 
-# 🔐 Wczytanie .env
+#
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -24,7 +24,7 @@ CLONE_DIR = "/app/code"
 intents = discord.Intents.default()
 intents.message_content = True
 
-# 📥 Pobieranie aktualizacji z Git
+#
 def pull_latest():
     try:
         if not os.path.isdir(CLONE_DIR + "/.git"):
@@ -38,7 +38,7 @@ def pull_latest():
     except Exception as e:
         print(f"❌ Git update failed: {e}")
 
-# ⏰ Uruchom harmonogram aktualizacji co 5 minut
+#
 schedule.every(5).minutes.do(pull_latest)
 
 def run_schedule():
@@ -48,10 +48,10 @@ def run_schedule():
 
 threading.Thread(target=run_schedule, daemon=True).start()
 
-# 📥 Pierwsze pobranie
+#
 pull_latest()
 
-# 🤖 Klient Discord
+#
 client = discord.Client(intents=intents)
 
 @client.event
@@ -76,11 +76,11 @@ async def on_message(message):
                             return
                 file_path = tmp.name
 
-            # 🦠 Skanowanie
+            #
             result = subprocess.run(["clamscan", file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = result.stdout.decode()
 
-            # ✅ Wysyłanie wyniku
+            #
             if "FOUND" in output:
                 await message.channel.send(f"⚠️ Virus detected in `{attachment.filename}`!\n```{output}```")
             elif "OK" in output:
