@@ -1,42 +1,31 @@
 {
-  "_comment": "ClamAVBot Egg",
+  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY FOR CLAMAVBOT",
   "meta": {
-    "version": "PTDL_v2",
-    "update_url": null
+    "update_url": null,
+    "version": "PTDL_v2"
   },
-  "exported_at": "2025-06-29T00:00:00+00:00",
+  "exported_at": "2025-06-29T18:00:00+00:00",
   "name": "ClamAVBot",
-  "author": "ribengame",
-  "description": "A Discord bot integrated with ClamAV antivirus",
+  "author": "you@example.com",
+  "description": "Discord bot with ClamAV integration.\nhttps://github.com/Ribengame/ClamAVBot",
   "features": null,
   "docker_images": {
     "python:3.11-slim": "python:3.11-slim"
   },
   "file_denylist": [],
-  "startup": "python3 bot.py",
+  "startup": "python bot.py",
   "config": {
     "files": "{}",
     "logs": "{}",
-    "startup": "{\r\n  \"done\": \"ClamAVBot Successfully Installed!\"\r\n}",
-    "stop": "SIGINT"
+    "startup": "{\n    \"done\": \"ClamAVBot is running\"\n}",
+    "stop": "^C"
   },
   "scripts": {
     "installation": {
       "container": "python:3.11-slim",
       "entrypoint": "bash",
-      "script": "#!/bin/bash\n# ClamAVBot install script\n# Inspired by Ree6 format for GitHub release-based bots\n\napt update\napt install -y jq curl git python3 python3-pip clamav clamav-daemon unzip\n\nCONFIG_LINK=\"https://raw.githubusercontent.com/Ribengame/ClamAVBot/main/config.json\"\n\nLATEST_JSON=$(curl --silent \"https://api.github.com/repos/Ribengame/ClamAVBot/releases/latest\")\nRELEASES=$(curl --silent \"https://api.github.com/repos/Ribengame/ClamAVBot/releases\")\nMATCH=\"clamavbot.zip\"\n\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i \"${MATCH}\" | head -1 )\nelse\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\n    if [ \"${VERSION}\" == \"${VERSION_CHECK}\" ]; then\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i \"${MATCH}\" | head -1)\n    else\n        echo -e \"Defaulting to latest release.\"\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i \"${MATCH}\")\n    fi\nfi\n\n[ ! -d /mnt/server ] && mkdir -p /mnt/server\n\nif [ ! -z \"${DOWNLOAD_URL}\" ]; then \n    if curl --output /dev/null --silent --head --fail ${DOWNLOAD_URL}; then\n        echo -e \"Valid link found. Setting download URL to ${DOWNLOAD_URL}\"\n        DOWNLOAD_LINK=${DOWNLOAD_URL}\n    else        \n        echo -e \"Invalid download URL. Aborting installation.\"\n        exit 2\n    fi\nfi\n\ncd /mnt/server\necho -e \"\\nInstalling/Updating ClamAVBot...\\n\"\n\nif [ -f clamavbot.zip ]; then\n    echo -e \"Backing up previous clamavbot.zip...\"\n    mv -f clamavbot.zip clamavbot.zip-old\nfi\n\necho -e \"Downloading ClamAVBot from ${DOWNLOAD_LINK}...\"\ncurl -sSL -o clamavbot.zip ${DOWNLOAD_LINK}\n\necho -e \"Extracting ClamAVBot...\"\nunzip -o clamavbot.zip -d /mnt/server\n\nif [ -f config.json ]; then\n    echo -e \"Backing up existing config.json...\"\n    mv -f config.json config.json-old\nfi\n\necho -e \"Downloading default config.json...\"\ncurl -sSL -o config.json ${CONFIG_LINK}\n\necho -e \"\\nClamAVBot Successfully Installed!\""
+      "script": "#!/bin/bash\n# ClamAVBot install script\n\n# Install dependencies\nmkdir -p /usr/share/man/man1\napt update\napt -y install git curl unzip clamav clamav-daemon python3-pip\n\n# Update virus definitions\nfreshclam\n\n# Setup project directory\nmkdir -p /mnt/server\ncd /mnt/server\n\n# Clone ClamAVBot repository\nif [ -d ClamAVBot ]; then\n  rm -rf ClamAVBot\nfi\ngit clone https://github.com/Ribengame/ClamAVBot.git ClamAVBot\ncd ClamAVBot\n\n# Install Python dependencies\npip install --upgrade pip\npip install -r requirements.txt\n\necho \"Installation complete.\"\n"
     }
   },
-  "variables": [
-    {
-      "name": "Discord Bot Token",
-      "description": "Your bot's token from https://discord.com/developers",
-      "env_variable": "TOKEN",
-      "default_value": "PASTE_YOUR_TOKEN",
-      "user_viewable": true,
-      "user_editable": true,
-      "rules": "required|string",
-      "field_type": "text"
-    }
-  ]
+  "variables": []
 }
