@@ -1,37 +1,60 @@
 #!/bin/bash
-# ClamAVBot install script
+## ClamAVBot install script
+## Prosty skrypt instalacyjny, wzorowany na przykładzie Ree6
 
-## install deps
-mkdir -p /usr/share/man/man1
 apt update
-apt -y install git ca-certificates dnsutils iproute2 make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev libgdbm-dev uuid-dev openjdk-17-jre-headless clamav clamav-daemon
+apt install -y jq curl git python3 python3-pip clamav clamav-daemon
 
-## config folder layouts
-echo -e "generating config folder layout"
-mkdir -p /mnt/server/.config/{ClamAVBot,share}/ /mnt/server/.local/share/ClamAVBot/data/pterodactyl/
-cd /mnt/server/
-ln -s .local/share/ClamAVBot/data/pterodactyl/ ./configs
+CONFIG_LINK="https://raw.githubusercontent.com/Ribengame/ClamAVBot/main/config.json"
 
-## clone bot repo
-echo -e "cloning ClamAVBot from GitHub"
-git clone https://github.com/Ribengame/ClamAVBot.git /mnt/server
+LATEST_JSON=$(curl --silent "https://api.github.com/repos/Ribengame/ClamAVBot/releases/latest")
+RELEASES=$(curl --silent "https://api.github.com/repos/Ribengame/ClamAVBot/releases")
+MATCH="clamavbot.zip"
 
-## add container user and permissions
-echo -e "add container user to install"
-ln -s /mnt/server/ /home/container
-useradd -m -d /home/container container
-chown -R container /mnt/server/
+if [ -z "${VERSION}" ] || [ "${VERSION}" == "latest" ]; then
+    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i "${MATCH}" | head -1 )
+else
+    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION "${VERSION}" '.[] | select(.tag_name==$VERSION) | .tag_name')
+    if [ "${VERSION}" == "${VERSION_CHECK}" ]; then
+        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION "${VERSION}" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i "${MATCH}" | head -1)
+    else
+        echo -e "defaulting to latest release"
+        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i "${MATCH}")
+    fi
+fi
 
-## install python deps as container user
-echo -e "install python dependencies"
-pip install --upgrade pip
-su - container -c 'pip install --upgrade pip wheel'
-su - container -c 'pip install --no-cache-dir -r /mnt/server/requirements.txt'
+[ ! -d /mnt/server ] && mkdir -p /mnt/server
 
-## update clamav virus database
-echo -e "updating clamav virus database"
-freshclam
+if [ ! -z "${DOWNLOAD_URL}" ]; then 
+    if curl --output /dev/null --silent --head --fail ${DOWNLOAD_URL}; then
+        echo -e "link is valid. setting download link to ${DOWNLOAD_URL}"
+        DOWNLOAD_LINK=${DOWNLOAD_URL}
+    else        
+        echo -e "link is invalid closing out"
+        exit 2
+    fi
+fi
 
-echo "-------------------------------------------------------"
-echo "Installation completed"
-echo "-------------------------------------------------------"
+cd /mnt/server
+echo -e "\nInstalling/Updating ClamAVBot...\n"
+
+if [ -f clamavbot.zip ]; then
+    echo -e "Backing up old clamavbot.zip..."
+    mv -f clamavbot.zip clamavbot.zip-old
+fi
+
+echo -e "Downloading ClamAVBot from ${DOWNLOAD_LINK}..."
+curl -sSL -o clamavbot.zip ${DOWNLOAD_LINK}
+
+echo -e "Extracting ClamAVBot..."
+unzip -o clamavbot.zip -d /mnt/server
+
+if [ -f config.json ]; then
+    echo -e "Backing up old config.json..."
+    mv -f config.json config.json-old
+fi
+
+echo -e "Downloading default config.json..."
+curl -sSL -o config.json ${CONFIG_LINK}
+
+echo -e "\nClamAVBot Successfully Installed!"
