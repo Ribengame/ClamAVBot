@@ -18,7 +18,7 @@
   },
   "scripts": {
     "installation": {
-      "script": "apt update && apt install -y clamav clamav-daemon git && freshclam && rm -rf /var/lib/apt/lists/* && pip install --no-cache-dir -r requirements.txt",
+      "script": "apt update && apt install -y clamav clamav-daemon git && freshclam && rm -rf /var/lib/apt/lists/* && git clone https://github.com/Ribengame/ClamAVBot.git /app && pip install --no-cache-dir -r /app/requirements.txt",
       "container": "debian:latest",
       "entrypoint": "bash"
     }
