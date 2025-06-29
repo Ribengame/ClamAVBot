@@ -1,16 +1,17 @@
 {
+  "_meta": {
+    "version": "v1",
+    "update_url": null
+  },
   "name": "Python 3.11 ClamAV Bot",
   "description": "ClamAVBot",
   "docker_images": [
     "python:3.11-slim"
   ],
-  "startup": "python bot.py",
-  "environment": {
-    "ENV_VAR_EXAMPLE": "default_value"
-  },
+  "startup": "python /app/bot.py",
   "config": {
     "files": "{}",
-    "startup": "python bot.py",
+    "startup": "python /app/bot.py",
     "logs": {
       "custom": false,
       "location": "logs/output.log"
