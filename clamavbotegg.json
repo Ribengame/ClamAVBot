@@ -1,13 +1,14 @@
 {
   "_meta": {
-    "version": "v1",
+    "version": "PTDL_v2",
     "update_url": null
   },
   "name": "Python 3.11 ClamAV Bot",
+  "author": "Ribengame",
   "description": "ClamAVBot",
-  "docker_images": [
-    "python:3.11-slim"
-  ],
+  "docker_images": {
+    "python:3.11-slim": "ghcr.io/pterodactyl/yolks:python_3.11"
+  },
   "startup": "python /app/bot.py",
   "config": {
     "files": "{}",
