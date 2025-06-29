@@ -1,60 +1,42 @@
-#!/bin/bash
-## ClamAVBot install script
-## Prosty skrypt instalacyjny, wzorowany na przykładzie Ree6
-
-apt update
-apt install -y jq curl git python3 python3-pip clamav clamav-daemon
-
-CONFIG_LINK="https://raw.githubusercontent.com/Ribengame/ClamAVBot/main/config.json"
-
-LATEST_JSON=$(curl --silent "https://api.github.com/repos/Ribengame/ClamAVBot/releases/latest")
-RELEASES=$(curl --silent "https://api.github.com/repos/Ribengame/ClamAVBot/releases")
-MATCH="clamavbot.zip"
-
-if [ -z "${VERSION}" ] || [ "${VERSION}" == "latest" ]; then
-    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i "${MATCH}" | head -1 )
-else
-    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION "${VERSION}" '.[] | select(.tag_name==$VERSION) | .tag_name')
-    if [ "${VERSION}" == "${VERSION_CHECK}" ]; then
-        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION "${VERSION}" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i "${MATCH}" | head -1)
-    else
-        echo -e "defaulting to latest release"
-        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i "${MATCH}")
-    fi
-fi
-
-[ ! -d /mnt/server ] && mkdir -p /mnt/server
-
-if [ ! -z "${DOWNLOAD_URL}" ]; then 
-    if curl --output /dev/null --silent --head --fail ${DOWNLOAD_URL}; then
-        echo -e "link is valid. setting download link to ${DOWNLOAD_URL}"
-        DOWNLOAD_LINK=${DOWNLOAD_URL}
-    else        
-        echo -e "link is invalid closing out"
-        exit 2
-    fi
-fi
-
-cd /mnt/server
-echo -e "\nInstalling/Updating ClamAVBot...\n"
-
-if [ -f clamavbot.zip ]; then
-    echo -e "Backing up old clamavbot.zip..."
-    mv -f clamavbot.zip clamavbot.zip-old
-fi
-
-echo -e "Downloading ClamAVBot from ${DOWNLOAD_LINK}..."
-curl -sSL -o clamavbot.zip ${DOWNLOAD_LINK}
-
-echo -e "Extracting ClamAVBot..."
-unzip -o clamavbot.zip -d /mnt/server
-
-if [ -f config.json ]; then
-    echo -e "Backing up old config.json..."
-    mv -f config.json config.json-old
-fi
-
-echo -e "Downloading default config.json..."
-curl -sSL -o config.json ${CONFIG_LINK}
-
-echo -e "\nClamAVBot Successfully Installed!"
+{
+  "_comment": "ClamAVBot Egg",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2025-06-29T00:00:00+00:00",
+  "name": "ClamAVBot",
+  "author": "ribengame",
+  "description": "A Discord bot integrated with ClamAV antivirus",
+  "features": null,
+  "docker_images": {
+    "python:3.11-slim": "python:3.11-slim"
+  },
+  "file_denylist": [],
+  "startup": "python3 bot.py",
+  "config": {
+    "files": "{}",
+    "logs": "{}",
+    "startup": "{\r\n  \"done\": \"ClamAVBot Successfully Installed!\"\r\n}",
+    "stop": "SIGINT"
+  },
+  "scripts": {
+    "installation": {
+      "container": "python:3.11-slim",
+      "entrypoint": "bash",
+      "script": "#!/bin/bash\n# ClamAVBot install script\n# Inspired by Ree6 format for GitHub release-based bots\n\napt update\napt install -y jq curl git python3 python3-pip clamav clamav-daemon unzip\n\nCONFIG_LINK=\"https://raw.githubusercontent.com/Ribengame/ClamAVBot/main/config.json\"\n\nLATEST_JSON=$(curl --silent \"https://api.github.com/repos/Ribengame/ClamAVBot/releases/latest\")\nRELEASES=$(curl --silent \"https://api.github.com/repos/Ribengame/ClamAVBot/releases\")\nMATCH=\"clamavbot.zip\"\n\nif [ -z \"${VERSION}\" ] || [ \"${VERSION}\" == \"latest\" ]; then\n    DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i \"${MATCH}\" | head -1 )\nelse\n    VERSION_CHECK=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name')\n    if [ \"${VERSION}\" == \"${VERSION_CHECK}\" ]; then\n        DOWNLOAD_URL=$(echo ${RELEASES} | jq -r --arg VERSION \"${VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[].browser_download_url' | grep -i \"${MATCH}\" | head -1)\n    else\n        echo -e \"Defaulting to latest release.\"\n        DOWNLOAD_URL=$(echo ${LATEST_JSON} | jq .assets | jq -r .[].browser_download_url | grep -i \"${MATCH}\")\n    fi\nfi\n\n[ ! -d /mnt/server ] && mkdir -p /mnt/server\n\nif [ ! -z \"${DOWNLOAD_URL}\" ]; then \n    if curl --output /dev/null --silent --head --fail ${DOWNLOAD_URL}; then\n        echo -e \"Valid link found. Setting download URL to ${DOWNLOAD_URL}\"\n        DOWNLOAD_LINK=${DOWNLOAD_URL}\n    else        \n        echo -e \"Invalid download URL. Aborting installation.\"\n        exit 2\n    fi\nfi\n\ncd /mnt/server\necho -e \"\\nInstalling/Updating ClamAVBot...\\n\"\n\nif [ -f clamavbot.zip ]; then\n    echo -e \"Backing up previous clamavbot.zip...\"\n    mv -f clamavbot.zip clamavbot.zip-old\nfi\n\necho -e \"Downloading ClamAVBot from ${DOWNLOAD_LINK}...\"\ncurl -sSL -o clamavbot.zip ${DOWNLOAD_LINK}\n\necho -e \"Extracting ClamAVBot...\"\nunzip -o clamavbot.zip -d /mnt/server\n\nif [ -f config.json ]; then\n    echo -e \"Backing up existing config.json...\"\n    mv -f config.json config.json-old\nfi\n\necho -e \"Downloading default config.json...\"\ncurl -sSL -o config.json ${CONFIG_LINK}\n\necho -e \"\\nClamAVBot Successfully Installed!\""
+    }
+  },
+  "variables": [
+    {
+      "name": "Discord Bot Token",
+      "description": "Your bot's token from https://discord.com/developers",
+      "env_variable": "TOKEN",
+      "default_value": "PASTE_YOUR_TOKEN",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    }
+  ]
+}
