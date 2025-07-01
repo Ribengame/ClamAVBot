@@ -21,3 +21,6 @@ No manual intervention is required — everything runs seamlessly in the backgro
 - Cuckoo integration – dynamic file analysis in a sandbox environment
 
 ---
+## Thanks:
+- Thanks to developer team of https://github.com/extremeshok/clamav-unofficial-sigs
+- Thanks to my friends for stay with me
