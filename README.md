@@ -7,7 +7,7 @@ With ClamAVBot, your community stays protected through:
 - Real-time scanning of all attachments  
 - Immediate threat notifications  
 - Automatic virus definition updates every 15 minutes  
-
+- Unoficial signatures
 No manual intervention is required — everything runs seamlessly in the background to keep your server safe.
 
 ---
