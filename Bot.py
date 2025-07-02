@@ -12,7 +12,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # Initialize ClamAV daemon client using Unix socket.
-# For TCP connection, use ClamdNetworkSocket(host='127.0.0.1', port=3310)
+# For TCP, use ClamdNetworkSocket(host='127.0.0.1', port=3310)
 cd = pyclamd.ClamdUnixSocket()
 
 @client.event
@@ -21,7 +21,6 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    # Ignore messages from bots to prevent loops
     if message.author.bot:
         return
 
@@ -32,7 +31,8 @@ async def on_message(message):
                 async with aiohttp.ClientSession() as session:
                     async with session.get(attachment.url) as resp:
                         if resp.status == 200:
-                            tmp.write(await resp.read())
+                            content = await resp.read()
+                            tmp.write(content)
                         else:
                             await message.channel.send(f"Failed to download `{attachment.filename}`.")
                             return
@@ -42,23 +42,21 @@ async def on_message(message):
             if attachment.filename.lower().endswith('.zip'):
                 try:
                     with zipfile.ZipFile(file_path, 'r') as zip_file:
-                        # The flag_bits & 0x1 indicates encryption for each file inside the zip
                         encrypted = any(info.flag_bits & 0x1 for info in zip_file.infolist())
                         if encrypted:
                             await message.channel.send(f"`{attachment.filename}` is encrypted. Unable to scan for viruses.")
-                            continue  # Skip scanning encrypted archives
+                            continue
                 except zipfile.BadZipFile:
                     await message.channel.send(f"`{attachment.filename}` is not a valid zip file.")
                     continue
 
-            # Scan the downloaded file using clamd daemon
-            scan_result = cd.scan_file(file_path)
+            # Scan file contents in memory to avoid file permission issues
+            scan_result = cd.scan_stream(content)
 
-            # If scan_result is None, no virus was detected
+            # Interpret scan results
             if scan_result is None:
                 await message.channel.send(f"`{attachment.filename}` is clean.")
             else:
-                # scan_result is a dict: {file_path: ('FOUND', 'virus_name')}
                 virus_name = list(scan_result.values())[0][1]
                 await message.channel.send(f"Virus detected in `{attachment.filename}`: `{virus_name}`")
 
@@ -66,7 +64,6 @@ async def on_message(message):
             await message.channel.send(f"Error occurred while scanning `{attachment.filename}`: {e}")
 
         finally:
-            # Ensure temporary file is deleted after scanning to free resources
             if os.path.exists(file_path):
                 os.remove(file_path)
 
