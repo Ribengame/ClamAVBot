@@ -6,6 +6,7 @@ import zipfile
 import pyclamd
 
 TOKEN = "PASTE_YOUR_DISCORD_BOT_TOKEN_HERE"
+DEVELOPER_ID = 123456789012345678  # <-- Replace with your Discord user ID
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,11 +20,42 @@ cd = pyclamd.ClamdUnixSocket()
 async def on_ready():
     print(f"Logged in as {client.user}")
 
+async def message_all_owners(message_content):
+    """
+    Send a DM with `message_content` to the owner of each guild.
+    """
+    for guild in client.guilds:
+        owner = guild.owner
+        if owner is not None:
+            try:
+                dm_channel = await owner.create_dm()
+                await dm_channel.send(message_content)
+            except Exception as e:
+                print(f"Could not send message to {owner}: {e}")
+
 @client.event
 async def on_message(message):
+    # Ignore bot messages
     if message.author.bot:
         return
 
+    # Handle !all command — only for the developer
+    if message.content.lower().startswith('!all'):
+        if message.author.id != DEVELOPER_ID:
+            await message.channel.send("You don't have permission to use this command.")
+            return
+        
+        content = message.content[4:].strip()
+        if not content:
+            await message.channel.send("Please provide a message to send.")
+            return
+        
+        await message.channel.send("Sending messages to all server owners...")
+        await message_all_owners(content)
+        await message.channel.send("Done sending messages.")
+        return
+
+    # Scan attachments for viruses
     for attachment in message.attachments:
         try:
             # Download attachment to a temporary file
