@@ -3,45 +3,13 @@ import aiohttp
 import os
 import subprocess
 import tempfile
+import zipfile
 
-# Provide the token directly here
 TOKEN = "PASTE_YOUR_DISCORD_BOT_TOKEN_HERE"
 
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-
-# The following Git update logic is disabled
-# import git
-# import schedule
-# import time
-# import threading
-# GIT_REPO = "https://github.com/Ribengame/ClamAVBot.git"
-# GIT_BRANCH = "main"
-# CLONE_DIR = "/app/code"
-
-# def pull_latest():
-#     try:
-#         if not os.path.isdir(CLONE_DIR + "/.git"):
-#             git.Repo.clone_from(GIT_REPO, CLONE_DIR, branch=GIT_BRANCH)
-#             print("Repository cloned")
-#         else:
-#             repo = git.Repo(CLONE_DIR)
-#             origin = repo.remotes.origin
-#             origin.pull()
-#             print("Repository updated")
-#     except Exception as e:
-#         print(f"Git update failed: {e}")
-
-# schedule.every(5).minutes.do(pull_latest)
-
-# def run_schedule():
-#     while True:
-#         schedule.run_pending()
-#         time.sleep(1)
-
-# threading.Thread(target=run_schedule, daemon=True).start()
-# pull_latest()
 
 @client.event
 async def on_ready():
@@ -64,6 +32,18 @@ async def on_message(message):
                             await message.channel.send(f"Failed to download `{attachment.filename}`.")
                             return
                 file_path = tmp.name
+
+            # Check if file is a .zip and if it's encrypted
+            if attachment.filename.lower().endswith('.zip'):
+                try:
+                    with zipfile.ZipFile(file_path, 'r') as zip_file:
+                        encrypted = any(info.flag_bits & 0x1 for info in zip_file.infolist())
+                        if encrypted:
+                            await message.channel.send(f"`{attachment.filename}` is encrypted. I cannot detect viruses.")
+                            continue  # Skip scanning
+                except zipfile.BadZipFile:
+                    await message.channel.send(f"`{attachment.filename}` is not a valid zip file.")
+                    continue
 
             # Scan the file with ClamAV
             result = subprocess.run(["clamscan", file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
